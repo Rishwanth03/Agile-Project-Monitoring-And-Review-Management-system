@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: agile-project-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm ci && npm run generate && npm run build
+    startCommand: npm run db:push && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: UPLOAD_DIR
+        value: uploads

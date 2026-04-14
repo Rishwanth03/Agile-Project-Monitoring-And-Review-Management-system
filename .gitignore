@@ -1,0 +1,20 @@
+node_modules/
+.env
+.env.*
+
+# Workspace noise
+.vscode/
+
+# Backend
+backend/node_modules/
+backend/.env
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+
+# Logs
+*.log
+npm-debug.log*

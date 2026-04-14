@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         String   // "student" or "faculty"
+  department   String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  studentProfile StudentProfile?
+  facultyProfile FacultyProfile?
+  teamMembers    TeamMember[]
+  submissions    Submission[]
+  reviews        Review[]
+  teamsCreated   Team[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model StudentProfile {
+  id         String  @id @default(uuid())
+  userId     String  @unique @map("user_id")
+  rollNumber String? @map("roll_number")
+  year       String?
+  section    String?
+  phone      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+model FacultyProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique @map("user_id")
+  designation String?
+  department  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("faculty_profiles")
+}
+
+model Team {
+  id                 String   @id @default(uuid())
+  teamName           String   @map("team_name")
+  projectTitle       String?  @map("project_title")
+  projectDescription String?  @map("project_description")
+  createdBy          String   @map("created_by")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  creator    User         @relation(fields: [createdBy], references: [id])
+  members    TeamMember[]
+  sprints    Sprint[]
+
+  @@index([createdBy])
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String @id @default(uuid())
+  teamId    String @map("team_id")
+  studentId String @map("student_id")
+
+  team    Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, studentId])
+  @@index([teamId])
+  @@index([studentId])
+  @@map("team_members")
+}
+
+model Sprint {
+  id           String   @id @default(uuid())
+  teamId       String   @map("team_id")
+  sprintNumber Int      @map("sprint_number")
+  startDate    DateTime @map("start_date")
+  endDate      DateTime @map("end_date")
+
+  team        Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  submissions Submission[]
+
+  @@index([teamId])
+  @@map("sprints")
+}
+
+model Submission {
+  id             String   @id @default(uuid())
+  sprintId       String   @map("sprint_id")
+  studentId      String   @map("student_id")
+  tasksCompleted String?  @map("tasks_completed")
+  challenges     String?
+  improvements   String?
+  fileUrl        String?  @map("file_url")
+  status         String   @default("pending") // "pending" or "reviewed"
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  sprint  Sprint  @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  student User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  review  Review?
+
+  @@index([sprintId])
+  @@index([studentId])
+  @@map("submissions")
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  submissionId String   @unique @map("submission_id")
+  facultyId    String   @map("faculty_id")
+  marks        Float?
+  rating       Int?     // 1-5
+  feedback     String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  faculty    User       @relation(fields: [facultyId], references: [id])
+
+  @@index([facultyId])
+  @@map("reviews")
+}
